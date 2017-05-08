@@ -156,7 +156,6 @@ public class FiltreAntiSpam {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		System.out.println("Yolololo");
 	}
 
 	public void apprentissage_mails(int nbSpams,int nbHams) throws Exception {
@@ -281,10 +280,10 @@ public class FiltreAntiSpam {
 		double px = -Math.log(Math.pow(0.5,dictionnaire.size()));
 		probaSpam += px;
 		probaHam += px;
-		double pSpam = 1.0 / (1.0 + Math.exp(probaSpam - probaHam));
 		double pHam = 1.0 / (1.0 + Math.exp(probaSpam - probaHam));
+		double pSpam = 1.0 / (1.0 + Math.exp(probaHam - probaSpam));
 		
-		System.out.print(": P(Y=SPAM | X=x) =" + pSpam + ", P(Y=HAM | X=x) =" + pHam);
+		System.out.print(": P(Y=SPAM | X=x) =" + pSpam + ", P(Y=HAM | X=x) =" + pHam+"\n");
 		
 		if (pSpam > pHam)
 			return 1;
@@ -325,13 +324,13 @@ public class FiltreAntiSpam {
 		{
 			System.out.print("\n"+resultat[resultatAttendu]+" numero "+i+" ");
 			int res = evaluer_mail(testDirectoryName+"/"+files[i]);
-			System.out.print("\n          => identifié comme un "+resultat[res]);
+			System.out.print("          => identifié comme un "+resultat[res]);
 			if (res != resultatAttendu){
 				nbTrueHam++;
 				System.out.print("  ****ERREUR****");
 			}
 		}
-		System.out.println("\nErreurs :\nSpam: "+nbTrueSpam+"/"+nbSpam+" => "+(int)(((double)nbTrueSpam/(double)nbSpam)*100)+"\nHam : "+nbTrueHam+"/"+nbHam+" => "+(int)(((double)nbTrueHam/(double)nbHam)*100)+"\n");
+		System.out.println("\nErreurs :\nSpam: "+nbTrueSpam+"/"+nbSpam+" => "+(int)(((double)nbTrueSpam/(double)nbSpam)*100)+"%\nHam : "+nbTrueHam+"/"+nbHam+" => "+(int)(((double)nbTrueHam/(double)nbHam)*100)+"%\nGlobal : "+(nbTrueHam+nbTrueSpam)+"/"+(nbSpam+nbHam)+" => "+(int)(((double)(nbTrueHam+nbTrueSpam)/(double)(nbHam+nbSpam))*100)+"\n");
 	}
 	
 	public boolean afficher() {
@@ -354,6 +353,7 @@ public class FiltreAntiSpam {
 			sb.append("Pour commencer l'apprentissage :\n      FiltreAntiSpam apprend_filtre [@DossierMailsApprentissage] [NbSpams] [NbHams] [@Classifeur]\n");
 			sb.append("Pour continuer l'apprentissage :\n      FiltreAntiSpam apprend_filtre_enligne @Mail TypeMail [@Classifieur] \n");
 			sb.append("Pour tester des mails :\n      FiltreAntiSpam filtre_mail [NbSpams] [NbHams] [@Classifieur] [@DossierMailsTest] \n");
+			sb.append("Pour tester un mail :\n      FiltreAntiSpam filtre_mail_un @Mail [@Classifieur] \n");
 			String repertoire, nom, classifieur;
 			int nbSpams = 200, nbHams = 200, type;
 			String help = sb.toString();
@@ -425,6 +425,20 @@ public class FiltreAntiSpam {
 							repertoire = args[4];
 							fas.lancer_tests(nbSpams, nbHams, repertoire);
 						}
+						break;
+					case "filtre_mail_un":
+						nom = args[1];
+						if (args.length < 3)
+							fas.charger_apprentissage();
+						else{
+							classifieur = args[2];
+							fas.charger_apprentissage(classifieur);
+						}
+						int i = fas.evaluer_mail(nom);
+						if (i == 0)
+							System.out.println("D'après le classifieur, le message est un HAM.");
+						else 
+							System.out.println("D'après le classifieur, le message est un SPAM.");
 						break;
 					case "help":
 						System.out.println(help);
